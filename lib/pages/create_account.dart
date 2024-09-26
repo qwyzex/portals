@@ -2,10 +2,40 @@ import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:portals/main.dart';
+import 'package:portals/pages/home_screen.dart';
 import 'package:portals/pages/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import 'package:cloud_firestore/cloud_firestore.dart';
 
-class AccountCreationScreen extends StatelessWidget {
+class AccountCreationScreen extends StatefulWidget {
   const AccountCreationScreen({super.key});
+
+  @override
+  _AccountCreationScreenState createState() => _AccountCreationScreenState();
+}
+
+class _AccountCreationScreenState extends State<AccountCreationScreen> {
+  final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final TextEditingController _nisController = TextEditingController();
+  final TextEditingController _emailController = TextEditingController();
+  final TextEditingController _passwordController = TextEditingController();
+
+  bool _isLoading = false;
+
+  @override
+  void initState() {
+    super.initState();
+    if (FirebaseAuth.instance.currentUser != null) {
+      // If user is already signed in, redirect to Home
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+        );
+      });
+    }
+  }
 
   @override
   Widget build(BuildContext context) {
@@ -33,18 +63,24 @@ class AccountCreationScreen extends StatelessWidget {
                   alignment: Alignment.topLeft,
                   child: Container(
                     decoration: BoxDecoration(
-                      color: Colors.black
-                          .withOpacity(0.2), // Semi-transparent background
+                      color: Navigator.canPop(context)
+                          ? Colors.black.withOpacity(0.2)
+                          : Colors.transparent, // Semi-transparent background
                       borderRadius: BorderRadius.circular(
                           50.0), // Optional: rounded corners
                     ),
-                    child: IconButton(
-                      onPressed: () {
-                        Navigator.pop(context);
-                      },
-                      icon: const Icon(Icons.keyboard_arrow_left_rounded,
-                          color: Colors.white),
-                    ),
+                    child: Navigator.canPop(context)
+                        ? IconButton(
+                            onPressed: () {
+                              Navigator.pop(context);
+                            },
+                            icon: const Icon(Icons.keyboard_arrow_left_rounded,
+                                color: Colors.white),
+                          )
+                        : const SizedBox(
+                            height: 48,
+                            width: 48,
+                          ),
                   ),
                 ),
               ),
@@ -64,6 +100,7 @@ class AccountCreationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 30),
                       TextField(
+                        controller: _nisController,
                         keyboardType: TextInputType.number,
                         inputFormatters: [
                           FilteringTextInputFormatter
@@ -106,6 +143,7 @@ class AccountCreationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       TextField(
+                        controller: _emailController,
                         decoration: InputDecoration(
                           hintText: 'Email',
                           hintStyle:
@@ -141,6 +179,7 @@ class AccountCreationScreen extends StatelessWidget {
                       ),
                       const SizedBox(height: 16),
                       TextField(
+                        controller: _passwordController,
                         decoration: InputDecoration(
                           hintText: 'Password',
                           hintStyle:
@@ -180,93 +219,145 @@ class AccountCreationScreen extends StatelessWidget {
                 ),
               ),
               // Bottom section with create account button and sign-in text
-              const BottomFun(),
+              Padding(
+                padding:
+                    const EdgeInsets.only(bottom: 50.0, left: 50, right: 50),
+                child: Column(
+                  crossAxisAlignment: CrossAxisAlignment.center,
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Row(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.center,
+                      children: [
+                        const Text(
+                          "Already have an account?",
+                          style:
+                              TextStyle(fontSize: 14, color: AppColors.primary),
+                        ),
+                        TextButton(
+                          onPressed: () {
+                            Navigator.pushReplacement(
+                              context,
+                              PageRouteBuilder(
+                                pageBuilder:
+                                    (context, animation, secondaryAnimation) =>
+                                        const LoginScreen(),
+                                transitionDuration:
+                                    Duration.zero, // No animation
+                                reverseTransitionDuration:
+                                    Duration.zero, // No reverse animation
+                              ),
+                            );
+                          },
+                          child: const Text(
+                            'Login',
+                            style: TextStyle(
+                                fontWeight: FontWeight.bold,
+                                fontSize: 14,
+                                color: AppColors.primary),
+                          ),
+                        ),
+                      ],
+                    ),
+                    Container(
+                      decoration: BoxDecoration(
+                        color: CupertinoColors.white,
+                        borderRadius:
+                            BorderRadius.circular(12.0), // Rounded corners
+                        boxShadow: [
+                          BoxShadow(
+                            color:
+                                Colors.black.withOpacity(0.15), // Shadow color
+                            spreadRadius: 3, // Spread radius
+                            blurRadius: 8, // Blur radius
+                            offset: const Offset(0, 5), // Offset of the shadow
+                          ),
+                        ],
+                      ),
+                      child: CupertinoButton(
+                        color: const Color(0xFFFCDCB7),
+                        onPressed: _createAccount,
+                        borderRadius:
+                            const BorderRadius.all(Radius.circular(12)),
+                        child: Row(
+                          mainAxisAlignment: MainAxisAlignment.center,
+                          crossAxisAlignment: CrossAxisAlignment.center,
+                          children: [
+                            const Text(
+                              'Create Account',
+                              style: TextStyle(
+                                  fontSize: 18,
+                                  color: Color(0xFF897558),
+                                  letterSpacing: 2),
+                            ),
+                            _isLoading
+                                ? const CircularProgressIndicator()
+                                : const Text(''),
+                          ],
+                        ),
+                      ),
+                    )
+                  ],
+                ),
+              ),
             ],
           ),
         ),
       ),
     );
   }
-}
 
-class BottomFun extends StatelessWidget {
-  const BottomFun({
-    super.key,
-  });
+  Future<void> _createAccount() async {
+    final String email = _emailController.text.trim();
+    final String password = _passwordController.text.trim();
+    final String nis = _nisController.text.trim();
 
-  @override
-  Widget build(BuildContext context) {
-    return Padding(
-      padding: const EdgeInsets.only(bottom: 50.0, left: 50, right: 50),
-      child: Column(
-        crossAxisAlignment: CrossAxisAlignment.center,
-        mainAxisAlignment: MainAxisAlignment.center,
-        children: [
-          Row(
-            mainAxisAlignment: MainAxisAlignment.center,
-            crossAxisAlignment: CrossAxisAlignment.center,
-            children: [
-              const Text(
-                "Already have an account?",
-                style: TextStyle(fontSize: 14, color: AppColors.primary),
-              ),
-              TextButton(
-                onPressed: () {
-                  Navigator.pushReplacement(
-                    context,
-                    PageRouteBuilder(
-                      pageBuilder: (context, animation, secondaryAnimation) =>
-                          const LoginScreen(),
-                      transitionDuration: Duration.zero, // No animation
-                      reverseTransitionDuration:
-                          Duration.zero, // No reverse animation
-                    ),
-                  );
-                },
-                child: const Text(
-                  'Login',
-                  style: TextStyle(
-                      fontWeight: FontWeight.bold,
-                      fontSize: 14,
-                      color: AppColors.primary),
-                ),
-              ),
-            ],
-          ),
-          Container(
-            decoration: BoxDecoration(
-              color: CupertinoColors.white,
-              borderRadius: BorderRadius.circular(12.0), // Rounded corners
-              boxShadow: [
-                BoxShadow(
-                  color: Colors.black.withOpacity(0.15), // Shadow color
-                  spreadRadius: 3, // Spread radius
-                  blurRadius: 8, // Blur radius
-                  offset: const Offset(0, 5), // Offset of the shadow
-                ),
-              ],
-            ),
-            child: CupertinoButton(
-              color: const Color(0xFFFCDCB7),
-              onPressed: () {},
-              borderRadius: const BorderRadius.all(Radius.circular(12)),
-              child: const Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                crossAxisAlignment: CrossAxisAlignment.center,
-                children: [
-                  Text(
-                    'Create Account',
-                    style: TextStyle(
-                        fontSize: 18,
-                        color: Color(0xFF897558),
-                        letterSpacing: 2),
-                  ),
-                ],
-              ),
-            ),
-          )
-        ],
-      ),
-    );
+    if (email.isEmpty || password.isEmpty || nis.isEmpty) {
+      _showSnackBar("Please fill in all fields");
+      return;
+    }
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      UserCredential justCreatedUser = await _auth
+          .createUserWithEmailAndPassword(email: email, password: password);
+      User? user = justCreatedUser.user;
+
+      if (user != null) {
+        await _db.collection("users").doc(user.uid).set({
+          'uid': user.uid,
+          'email': email,
+          'nis': _nisController.text.trim(),
+          'createdAt': FieldValue.serverTimestamp(),
+        });
+
+        await user.sendEmailVerification();
+      }
+
+      // Check if widget is still mounted before navigating
+      if (!mounted) return;
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
+      );
+    } on FirebaseAuthException catch (e) {
+      _showSnackBar("Failed to create account: ${e.message}");
+    } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  void _showSnackBar(String message) {
+    final snackBar = SnackBar(content: Text(message));
+    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

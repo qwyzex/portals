@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "642483586949",
+    "project_id": "portals-slj8vs",
+    "storage_bucket": "portals-slj8vs.appspot.com"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:642483586949:android:4e60321288495d710066ec",
+        "android_client_info": {
+          "package_name": "com.qwyzex.portals"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyBtTPMuEoxiw_q6LREPldFkrxhOwEbcakE"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}

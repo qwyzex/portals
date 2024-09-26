@@ -1,5 +1,7 @@
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:portals/main.dart';
+import 'package:portals/pages/home_screen.dart';
 import 'package:portals/pages/login_screen.dart';
 import '../components/custom_button.dart';
 
@@ -13,6 +15,20 @@ class SlidesPage extends StatefulWidget {
 class _SlidesPageState extends State<SlidesPage> {
   final PageController _pageController = PageController();
   int _currentPage = 0;
+
+  @override
+  void initState() {
+    super.initState();
+    if (FirebaseAuth.instance.currentUser != null) {
+      // If user is already signed in, redirect to Home
+      WidgetsBinding.instance.addPostFrameCallback((_) {
+        Navigator.pushReplacement(
+          context,
+          MaterialPageRoute(builder: (context) => HomeScreen()),
+        );
+      });
+    }
+  }
 
   // List of slide data
   final List<Map<String, String>> _slides = [
