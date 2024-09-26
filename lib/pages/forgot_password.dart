@@ -1,27 +1,21 @@
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
-import 'package:flutter/services.dart';
 import 'package:portals/components/custom_snackbar.dart';
 import 'package:portals/main.dart';
-import 'package:portals/pages/create_account.dart';
-import 'package:portals/pages/forgot_password.dart';
 import 'package:portals/pages/home_screen.dart';
+import 'package:portals/pages/login_screen.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
-class LoginScreen extends StatefulWidget {
-  const LoginScreen({super.key});
+class PasswordResetPage extends StatefulWidget {
+  const PasswordResetPage({super.key});
 
   @override
-  State<LoginScreen> createState() => _LoginScreenState();
+  State<PasswordResetPage> createState() => _PasswordResetPageState();
 }
 
-class _LoginScreenState extends State<LoginScreen> {
+class _PasswordResetPageState extends State<PasswordResetPage> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
-  final FirebaseFirestore _db = FirebaseFirestore.instance;
-  final TextEditingController _nisController = TextEditingController();
   final TextEditingController _emailController = TextEditingController();
-  final TextEditingController _passwordController = TextEditingController();
 
   bool _isLoading = false;
 
@@ -94,56 +88,13 @@ class _LoginScreenState extends State<LoginScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Login',
+                        'Reset Password',
                         style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
                             color: AppColors.textColor),
                       ),
                       const SizedBox(height: 30),
-                      TextField(
-                        controller: _nisController,
-                        keyboardType: TextInputType.number,
-                        inputFormatters: [
-                          FilteringTextInputFormatter
-                              .digitsOnly, // Accept only digits
-                        ],
-                        maxLength: 5,
-                        decoration: InputDecoration(
-                          counterText: '',
-                          hintText: 'NIS',
-                          hintStyle:
-                              const TextStyle(color: AppColors.textColorDim),
-                          filled: true,
-                          fillColor: AppColors.primaryLighter,
-                          // Border properties
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Colors.transparent, // Default border color
-                              width: 3, // Change thickness here
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors
-                                  .focusedBorderColor, // Color when focused
-                              width: 3, // Change thickness here
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Colors.red, // Color for error state
-                              width: 3, // Change thickness here
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 16, horizontal: 16), // Padding
-                        ),
-                      ),
-                      const SizedBox(height: 16),
                       TextField(
                         controller: _emailController,
                         decoration: InputDecoration(
@@ -179,67 +130,11 @@ class _LoginScreenState extends State<LoginScreen> {
                               vertical: 16, horizontal: 16), // Padding
                         ),
                       ),
-                      const SizedBox(height: 16),
-                      TextField(
-                        controller: _passwordController,
-                        decoration: InputDecoration(
-                          hintText: 'Password',
-                          hintStyle:
-                              const TextStyle(color: AppColors.textColorDim),
-                          filled: true,
-                          fillColor: AppColors.primaryLighter,
-                          // Border properties
-                          enabledBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Colors.transparent, // Default border color
-                              width: 3.0, // Change thickness here
-                            ),
-                          ),
-                          focusedBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: AppColors
-                                  .focusedBorderColor, // Color when focused
-                              width: 3.0, // Change thickness here
-                            ),
-                          ),
-                          errorBorder: OutlineInputBorder(
-                            borderRadius: BorderRadius.circular(12),
-                            borderSide: const BorderSide(
-                              color: Colors.red, // Color for error state
-                              width: 3.0, // Change thickness here
-                            ),
-                          ),
-                          contentPadding: const EdgeInsets.symmetric(
-                              vertical: 16, horizontal: 16), // Padding
-                        ),
-                        obscureText: true,
-                      ),
-                      const SizedBox(height: 16),
-                      Container(
-                        padding: const EdgeInsets.only(top: 5.0, left: 10.0),
-                        child: TextButton(
-                          onPressed: () {
-                            Navigator.push(
-                                context,
-                                MaterialPageRoute(
-                                    builder: (context) =>
-                                        const PasswordResetPage()));
-                          },
-                          child: const Text(
-                            'Forgot your password?',
-                            style: TextStyle(
-                                fontWeight: FontWeight.w100,
-                                color: AppColors.primary),
-                          ),
-                        ),
-                      )
                     ],
                   ),
                 ),
               ),
-              // Bottom section with login button and sign-up text
+              // Bottom section with create account button and sign-in text
               Padding(
                 padding:
                     const EdgeInsets.only(bottom: 50.0, left: 50, right: 50),
@@ -252,7 +147,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Text(
-                          "Doesn't have an account?",
+                          "Remember your password already?",
                           style:
                               TextStyle(fontSize: 14, color: AppColors.primary),
                         ),
@@ -263,7 +158,7 @@ class _LoginScreenState extends State<LoginScreen> {
                               PageRouteBuilder(
                                 pageBuilder:
                                     (context, animation, secondaryAnimation) =>
-                                        const AccountCreationScreen(),
+                                        const LoginScreen(),
                                 transitionDuration:
                                     Duration.zero, // No animation
                                 reverseTransitionDuration:
@@ -272,7 +167,7 @@ class _LoginScreenState extends State<LoginScreen> {
                             );
                           },
                           child: const Text(
-                            'Create one',
+                            'Login',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -298,20 +193,23 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       child: CupertinoButton(
                         color: const Color(0xFFFCDCB7),
-                        onPressed: _signIn,
+                        onPressed: _sendResetEmail,
                         borderRadius:
                             const BorderRadius.all(Radius.circular(12)),
-                        child: const Row(
+                        child: Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            Text(
-                              'Login',
+                            const Text(
+                              'Send Link',
                               style: TextStyle(
                                   fontSize: 18,
                                   color: Color(0xFF897558),
                                   letterSpacing: 2),
                             ),
+                            _isLoading
+                                ? const CircularProgressIndicator()
+                                : const Text(''),
                           ],
                         ),
                       ),
@@ -326,17 +224,12 @@ class _LoginScreenState extends State<LoginScreen> {
     );
   }
 
-  Future<void> _signIn() async {
+  Future<void> _sendResetEmail() async {
     final String email = _emailController.text.trim();
-    final String password = _passwordController.text.trim();
-    final String nis = _nisController.text.trim();
 
-    if (email.isEmpty || password.isEmpty || nis.isEmpty) {
+    if (email.isEmpty) {
       customSnackbar(
-        message: 'Please fill in all fields.',
-        context: context,
-        backgroundColor: const Color(0xFFFFBF00),
-      );
+          message: "Please fill in the email address", context: context);
       return;
     }
 
@@ -345,59 +238,26 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      // Check if the given NIS is equal to the NIS in the document with email
-      final userDocQuery = await _db
-          .collection('users')
-          .where('email', isEqualTo: email)
-          .limit(1)
-          .get();
+      await _auth.sendPasswordResetEmail(email: email);
 
-      if (userDocQuery.docs.isNotEmpty) {
-        final userDoc = userDocQuery.docs.first.data();
-
-        if (userDoc['nis'] == nis) {
-          await _auth.signInWithEmailAndPassword(
-              email: email, password: password);
-
-          if (!mounted) return;
-          customSnackbar(
-            message: 'Successfully signed in.',
-            context: context,
-            backgroundColor: const Color(0xFF32CD32),
-          );
-        } else {
-          if (!mounted) return;
-          customSnackbar(
-            message: 'NIS does not match.',
-            context: context,
-            backgroundColor: const Color(0xFFD22B2B),
-          );
-        }
-
-        if (!mounted) return;
-
-        Navigator.pushAndRemoveUntil(
-          context,
-          MaterialPageRoute(builder: (context) => const HomeScreen()),
-          (Route<dynamic> route) => false, // Remove all previous routes
-        );
-      } else {
-        if (!mounted) return;
-        customSnackbar(
-          message: 'No user found with this email.',
-          context: context,
-          backgroundColor: const Color(0xFFD22B2B),
-        );
-      }
-    } on FirebaseAuthException catch (e) {
+      // Check if widget is still mounted before navigating
       if (!mounted) return;
-      customSnackbar(
-        message: 'Failed to sign in: ${e.message}',
-        context: context,
-        backgroundColor: const Color(0xFFD22B2B),
+
+      Navigator.pushReplacement(
+        context,
+        MaterialPageRoute(builder: (context) => const HomeScreen()),
       );
+    } on FirebaseAuthException catch (e) {
+      customSnackbar(
+          message: "Failed to create account: ${e.message}",
+          context: context,
+          backgroundColor: Colors.redAccent);
     } finally {
       if (mounted) {
+        customSnackbar(
+            message: "Please check your mailbox for link to reset password",
+            context: context,
+            backgroundColor: Colors.greenAccent);
         setState(() {
           _isLoading = false;
         });
