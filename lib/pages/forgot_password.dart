@@ -153,18 +153,19 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
                         ),
                         TextButton(
                           onPressed: () {
-                            Navigator.pushReplacement(
-                              context,
-                              PageRouteBuilder(
-                                pageBuilder:
-                                    (context, animation, secondaryAnimation) =>
-                                        const LoginScreen(),
-                                transitionDuration:
-                                    Duration.zero, // No animation
-                                reverseTransitionDuration:
-                                    Duration.zero, // No reverse animation
-                              ),
-                            );
+                            Navigator.pop(context);
+                            // Navigator.pushReplacement(
+                            //   context,
+                            //   PageRouteBuilder(
+                            //     pageBuilder:
+                            //         (context, animation, secondaryAnimation) =>
+                            //             const LoginScreen(),
+                            //     transitionDuration:
+                            //         Duration.zero, // No animation
+                            //     reverseTransitionDuration:
+                            //         Duration.zero, // No reverse animation
+                            //   ),
+                            // );
                           },
                           child: const Text(
                             'Login',
@@ -242,11 +243,6 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
 
       // Check if widget is still mounted before navigating
       if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
-      );
     } on FirebaseAuthException catch (e) {
       customSnackbar(
           message: "Failed to create account: ${e.message}",
@@ -258,6 +254,7 @@ class _PasswordResetPageState extends State<PasswordResetPage> {
             message: "Please check your mailbox for link to reset password",
             context: context,
             backgroundColor: Colors.greenAccent);
+        _emailController.clear();
         setState(() {
           _isLoading = false;
         });
