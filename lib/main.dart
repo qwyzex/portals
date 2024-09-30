@@ -20,6 +20,7 @@ class AppColors {
   static const Color primaryLighter = Color(0xFFFEF1E1);
   static const Color secondary = Color(0xFFDC8282);
   static const Color buttonBackground = Color(0xFFFFE5C7);
+  static const Color background = Color(0xFFFFFAF4);
   static const Color textColor = Color(0xFF897558);
   static const Color textColorDim = Color(0xFFAC987C);
   static const Color focusedBorderColor = Color(0xFF897558);
@@ -48,7 +49,7 @@ class AuthGuard extends StatefulWidget {
   const AuthGuard({super.key});
 
   @override
-  _AuthGuardState createState() => _AuthGuardState();
+  State<AuthGuard> createState() => _AuthGuardState();
 }
 
 class _AuthGuardState extends State<AuthGuard> {

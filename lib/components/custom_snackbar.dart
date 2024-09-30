@@ -13,7 +13,7 @@ void customSnackbar({
   final overlayEntry = OverlayEntry(
     builder: (context) => SlidingSnackBarWidget(
       message: message,
-      duration: duration ?? const Duration(milliseconds: 3500),
+      duration: duration ?? const Duration(milliseconds: 4500),
       textStyle: textStyle,
       textColor: textColor,
       backgroundColor: backgroundColor,
@@ -24,7 +24,7 @@ void customSnackbar({
   overlay.insert(overlayEntry);
 
   // Remove the snack bar after the specified duration
-  Future.delayed(duration ?? const Duration(milliseconds: 3500), () {
+  Future.delayed(duration ?? const Duration(milliseconds: 4500), () {
     overlayEntry.remove();
   });
 }
