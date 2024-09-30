@@ -1,11 +1,13 @@
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
+import 'package:portals/components/custom_snackbar.dart';
 import 'package:portals/main.dart';
 import 'package:portals/pages/home_screen.dart';
 import 'package:portals/pages/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:excel/excel.dart'; // To parse Excel files
 
 class AccountCreationScreen extends StatefulWidget {
   const AccountCreationScreen({super.key});
@@ -322,6 +324,40 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
       _isLoading = true;
     });
 
+    ByteData data = await rootBundle.load('assets/nisdata/nis.xlsx');
+    var bytes = data.buffer.asUint8List();
+
+    var excel = Excel.decodeBytes(bytes);
+
+    String? displayName;
+
+    // Iterate through the rows of the first sheet in the Excel file
+    for (var table in excel.tables.keys) {
+      for (var row in excel.tables[table]!.rows) {
+        String nisFromExcel = row[2]?.value.toString() ?? '';
+        if (nis == nisFromExcel) {
+          displayName = row[1]?.value.toString();
+          break;
+        }
+      }
+      if (displayName != null) break;
+    }
+
+    if (displayName == null) {
+      // throw Exception('NIS is invalid.');
+      if (!mounted) return;
+      customSnackbar(
+          message: 'NIS is invalid.',
+          context: context,
+          backgroundColor: Colors.redAccent);
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+      return;
+    }
+
     try {
       UserCredential justCreatedUser = await _auth
           .createUserWithEmailAndPassword(email: email, password: password);
@@ -332,6 +368,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
           'uid': user.uid,
           'email': email,
           'nis': _nisController.text.trim(),
+          'displayName': displayName,
           'createdAt': FieldValue.serverTimestamp(),
         });
 
