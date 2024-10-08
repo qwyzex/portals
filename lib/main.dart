@@ -17,11 +17,11 @@ void main() async {
 
 class AppColors {
   static const Color primary = Color(0xFFFFE5C7);
-  static const Color primaryLighter = Color(0xFFFEF1E1);
+  static const Color primaryLighter = Color.fromARGB(255, 243, 227, 206);
   static const Color secondary = Color(0xFFDC8282);
   static const Color buttonBackground = Color(0xFFFFE5C7);
-  static const Color background = Color(0xFFFFFAF4);
-  static const Color textColor = Color(0xFF897558);
+  static const Color background = Color.fromARGB(255, 255, 243, 229);
+  static const Color textColor = Color(0xFF604a24);
   static const Color textColorDim = Color(0xFFAC987C);
   static const Color focusedBorderColor = Color(0xFF897558);
   // Add more colors as needed
@@ -35,9 +35,56 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'portalsmansa',
       theme: ThemeData(
-          colorScheme: ColorScheme.fromSeed(seedColor: Colors.blue),
+          colorScheme: ColorScheme.fromSeed(seedColor: AppColors.primary),
           useMaterial3: true,
           fontFamily: 'Lexend',
+          scaffoldBackgroundColor: AppColors.background,
+          appBarTheme: const AppBarTheme(color: AppColors.background),
+          inputDecorationTheme: InputDecorationTheme(
+              hintStyle: const TextStyle(color: AppColors.textColorDim),
+              filled: true,
+              fillColor: AppColors.primaryLighter,
+              // Border properties
+              enabledBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.transparent, // Default border color
+                  width: 3, // Change thickness here
+                ),
+              ),
+              focusedBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: AppColors.focusedBorderColor, // Color when focused
+                  width: 3, // Change thickness here
+                ),
+              ),
+              errorBorder: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(12),
+                borderSide: const BorderSide(
+                  color: Colors.red, // Color for error state
+                  width: 3, // Change thickness here
+                ),
+              ),
+              contentPadding:
+                  const EdgeInsets.symmetric(vertical: 16, horizontal: 16)),
+          bottomAppBarTheme:
+              const BottomAppBarTheme(color: AppColors.background),
+          textTheme: const TextTheme(
+              bodyMedium: TextStyle(color: AppColors.textColor)),
+          cupertinoOverrideTheme: const NoDefaultCupertinoThemeData(
+              textTheme: CupertinoTextThemeData(
+            textStyle:
+                TextStyle(color: AppColors.textColor, fontFamily: 'Lexend'),
+          )),
+          tabBarTheme: const TabBarTheme(
+              labelColor: AppColors.textColor,
+              unselectedLabelColor: AppColors.textColorDim,
+              indicator: UnderlineTabIndicator(
+                borderSide: BorderSide(color: AppColors.textColor, width: 3.0),
+                borderRadius: BorderRadius.only(
+                    topLeft: Radius.circular(5), topRight: Radius.circular(5)),
+              )),
           primaryColor: AppColors.primary),
       home: const AuthGuard(),
       debugShowCheckedModeBanner: false,

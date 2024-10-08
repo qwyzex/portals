@@ -8,7 +8,9 @@ import 'package:flutter/services.dart';
 import 'package:portals/components/custom_button.dart';
 import 'package:portals/components/custom_snackbar.dart';
 import 'package:portals/main.dart';
-import 'package:portals/pages/login_screen.dart';
+import 'package:portals/pages/profile/account_profile.dart';
+import 'package:portals/pages/home/home_feed.dart';
+import 'package:portals/pages/auth/login_screen.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 class HomeScreen extends StatefulWidget {
@@ -19,93 +21,57 @@ class HomeScreen extends StatefulWidget {
 }
 
 class _HomeScreenState extends State<HomeScreen> {
-  Map<String, dynamic>? documentData;
   final FirebaseAuth _auth = FirebaseAuth.instance;
+  final FirebaseFirestore _firestore = FirebaseFirestore.instance;
+  Map<String, dynamic>? userData; // To store the user document data
+  List<Map<String, dynamic>> postsData = [];
+  bool _isLoading = true;
 
-  // state of tabs open, home or profile
-  int openedTab = 1;
-
-  Future<void> fetchDocument() async {
+  // Function to fetch the user document
+  Future<void> fetchUserData() async {
     final User? user = _auth.currentUser;
 
-    try {
-      if (user != null) {
-        DocumentSnapshot documentSnapshot = await FirebaseFirestore.instance
-            .collection('users')
-            .doc(user.uid)
-            .get();
-
+    if (user != null) {
+      try {
+        DocumentSnapshot userDoc =
+            await _firestore.collection('users').doc(user.uid).get();
         setState(() {
-          documentData = documentSnapshot.data() as Map<String, dynamic>?;
+          userData = userDoc.data() as Map<String, dynamic>;
         });
+      } catch (e) {
+        print("Error fetching user data: $e");
       }
+    }
+  }
+
+  // Function to fetch all posts
+  Future<void> fetchPosts() async {
+    try {
+      QuerySnapshot querySnapshot = await _firestore.collection('posts').get();
+
+      setState(() {
+        postsData = querySnapshot.docs
+            .map((doc) => doc.data() as Map<String, dynamic>)
+            .toList();
+        _isLoading = false;
+      });
     } catch (e) {
-      print('Error retrieving document: $e');
+      print('Error retrieving posts: $e');
+      setState(() {
+        _isLoading = false;
+      });
     }
   }
 
   @override
   void initState() {
     super.initState();
-    // Fetch the document when the page is loaded
-    fetchDocument();
+    fetchUserData();
+    fetchPosts();
   }
 
-  // @override
-  // Widget build(BuildContext context) {
-  //   SystemChrome.setSystemUIOverlayStyle(
-  //     const SystemUiOverlayStyle(
-  //       statusBarColor: Colors.transparent, // Transparent status bar
-  //       statusBarIconBrightness: Brightness.dark, // Dark icons
-  //     ),
-  //   );
-
-  //   return Scaffold(
-  //     appBar: AppBar(
-  //       title: const Text('Home'),
-  //     ),
-  //     body: documentData == null
-  //         ? const Center(
-  //             child:
-  //                 CircularProgressIndicator()) // Show a loader while waiting for the data
-  //         : Column(
-  //             children: [
-  //               Padding(
-  //                 padding: const EdgeInsets.all(16.0),
-  //                 child: Column(
-  //                   crossAxisAlignment: CrossAxisAlignment.start,
-  //                   children: [
-  //                     const Text(
-  //                       'User Data:',
-  //                       style: TextStyle(
-  //                           fontSize: 20, fontWeight: FontWeight.bold),
-  //                     ),
-  //                     const SizedBox(height: 10),
-  //                     // Render the document data
-  //                     Text("NIS: ${documentData?['nis']}"),
-  //                     Text("Email: ${documentData?['email']}"),
-  //                     Text("UID: ${documentData?['uid']}"),
-  //                     Text("Date Created: ${documentData?['createdAt']}"),
-  //                   ],
-  //                 ),
-  //               ),
-  //               const SizedBox(
-  //                 height: 20,
-  //               ),
-  //               SizedBox(
-  //                 width: 330,
-  //                 child: CustomButton(
-  //                   buttonColor: Colors.red,
-  //                   textColor: Colors.white,
-  //                   text: 'Log Out',
-  //                   onPressed: signOut,
-  //                 ),
-  //               ),
-  //             ],
-  //           ),
-  //   );
-  // }
-
+  // state of tabs open, home or profile
+  int openedTab = 1;
   @override
   Widget build(BuildContext context) {
     SystemChrome.setSystemUIOverlayStyle(
@@ -116,22 +82,13 @@ class _HomeScreenState extends State<HomeScreen> {
     );
 
     return Scaffold(
-      appBar: AppBar(
-        backgroundColor: AppColors.background,
-        title: Center(
-          child: GradientText('portalsmansa',
-              colors: const [AppColors.textColor, AppColors.textColorDim]),
-        ),
-      ),
-      body: Container(
-        decoration: const BoxDecoration(color: AppColors.background),
-        child: Center(
-          child: Text(openedTab == 1 ? 'HOME' : 'PROFILE'),
-        ),
-      ),
-      bottomSheet: BottomAppBar(
+      body: openedTab == 2
+          ? AccountProfile(
+              userData: userData,
+            )
+          : HomeFeed(postsData: postsData, refetchPosts: fetchPosts),
+      bottomNavigationBar: BottomAppBar(
         elevation: 2.0,
-        color: AppColors.background,
         height: 60,
         padding: const EdgeInsets.all(0),
         child: Row(

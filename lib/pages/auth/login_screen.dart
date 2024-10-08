@@ -1,22 +1,22 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
 import 'package:portals/components/custom_snackbar.dart';
 import 'package:portals/main.dart';
+import 'package:portals/pages/auth/create_account.dart';
+import 'package:portals/pages/auth/forgot_password.dart';
 import 'package:portals/pages/home_screen.dart';
-import 'package:portals/pages/login_screen.dart';
-import 'package:firebase_auth/firebase_auth.dart';
-import 'package:cloud_firestore/cloud_firestore.dart';
-import 'package:excel/excel.dart'; // To parse Excel files
 
-class AccountCreationScreen extends StatefulWidget {
-  const AccountCreationScreen({super.key});
+class LoginScreen extends StatefulWidget {
+  const LoginScreen({super.key});
 
   @override
-  _AccountCreationScreenState createState() => _AccountCreationScreenState();
+  State<LoginScreen> createState() => _LoginScreenState();
 }
 
-class _AccountCreationScreenState extends State<AccountCreationScreen> {
+class _LoginScreenState extends State<LoginScreen> {
   final FirebaseAuth _auth = FirebaseAuth.instance;
   final FirebaseFirestore _db = FirebaseFirestore.instance;
   final TextEditingController _nisController = TextEditingController();
@@ -94,7 +94,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                     crossAxisAlignment: CrossAxisAlignment.start,
                     children: [
                       const Text(
-                        'Create Account',
+                        'Login',
                         style: TextStyle(
                             fontSize: 32,
                             fontWeight: FontWeight.bold,
@@ -216,11 +216,30 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                         ),
                         obscureText: true,
                       ),
+                      const SizedBox(height: 16),
+                      Container(
+                        padding: const EdgeInsets.only(top: 5.0, left: 10.0),
+                        child: TextButton(
+                          onPressed: () {
+                            Navigator.push(
+                                context,
+                                MaterialPageRoute(
+                                    builder: (context) =>
+                                        const PasswordResetPage()));
+                          },
+                          child: const Text(
+                            'Forgot your password?',
+                            style: TextStyle(
+                                fontWeight: FontWeight.w100,
+                                color: AppColors.primary),
+                          ),
+                        ),
+                      )
                     ],
                   ),
                 ),
               ),
-              // Bottom section with create account button and sign-in text
+              // Bottom section with login button and sign-up text
               Padding(
                 padding:
                     const EdgeInsets.only(bottom: 50.0, left: 50, right: 50),
@@ -233,7 +252,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       crossAxisAlignment: CrossAxisAlignment.center,
                       children: [
                         const Text(
-                          "Already have an account?",
+                          "Doesn't have an account?",
                           style:
                               TextStyle(fontSize: 14, color: AppColors.primary),
                         ),
@@ -244,7 +263,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                               PageRouteBuilder(
                                 pageBuilder:
                                     (context, animation, secondaryAnimation) =>
-                                        const LoginScreen(),
+                                        const AccountCreationScreen(),
                                 transitionDuration:
                                     Duration.zero, // No animation
                                 reverseTransitionDuration:
@@ -253,7 +272,7 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                             );
                           },
                           child: const Text(
-                            'Login',
+                            'Create one',
                             style: TextStyle(
                                 fontWeight: FontWeight.bold,
                                 fontSize: 14,
@@ -279,23 +298,20 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
                       ),
                       child: CupertinoButton(
                         color: const Color(0xFFFCDCB7),
-                        onPressed: _createAccount,
+                        onPressed: _signIn,
                         borderRadius:
                             const BorderRadius.all(Radius.circular(12)),
-                        child: Row(
+                        child: const Row(
                           mainAxisAlignment: MainAxisAlignment.center,
                           crossAxisAlignment: CrossAxisAlignment.center,
                           children: [
-                            const Text(
-                              'Create Account',
+                            Text(
+                              'Login',
                               style: TextStyle(
                                   fontSize: 18,
                                   color: Color(0xFF897558),
                                   letterSpacing: 2),
                             ),
-                            _isLoading
-                                ? const CircularProgressIndicator()
-                                : const Text(''),
                           ],
                         ),
                       ),
@@ -310,13 +326,17 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
     );
   }
 
-  Future<void> _createAccount() async {
+  Future<void> _signIn() async {
     final String email = _emailController.text.trim();
     final String password = _passwordController.text.trim();
     final String nis = _nisController.text.trim();
 
     if (email.isEmpty || password.isEmpty || nis.isEmpty) {
-      _showSnackBar("Please fill in all fields");
+      customSnackbar(
+        message: 'Please fill in all fields.',
+        context: context,
+        backgroundColor: const Color(0xFFFFBF00),
+      );
       return;
     }
 
@@ -324,66 +344,58 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
       _isLoading = true;
     });
 
-    ByteData data = await rootBundle.load('assets/nisdata/nis.xlsx');
-    var bytes = data.buffer.asUint8List();
+    try {
+      // Check if the given NIS is equal to the NIS in the document with email
+      final userDocQuery = await _db
+          .collection('users')
+          .where('email', isEqualTo: email)
+          .limit(1)
+          .get();
 
-    var excel = Excel.decodeBytes(bytes);
+      if (userDocQuery.docs.isNotEmpty) {
+        final userDoc = userDocQuery.docs.first.data();
 
-    String? displayName;
+        if (userDoc['nis'] == nis) {
+          await _auth.signInWithEmailAndPassword(
+              email: email, password: password);
 
-    // Iterate through the rows of the first sheet in the Excel file
-    for (var table in excel.tables.keys) {
-      for (var row in excel.tables[table]!.rows) {
-        String nisFromExcel = row[2]?.value.toString() ?? '';
-        if (nis == nisFromExcel) {
-          displayName = row[1]?.value.toString();
-          break;
+          if (!mounted) return;
+          customSnackbar(
+            message: 'Successfully signed in.',
+            context: context,
+            backgroundColor: const Color(0xFF32CD32),
+          );
+        } else {
+          if (!mounted) return;
+          customSnackbar(
+            message: 'NIS does not match.',
+            context: context,
+            backgroundColor: const Color(0xFFD22B2B),
+          );
         }
-      }
-      if (displayName != null) break;
-    }
 
-    if (displayName == null) {
-      // throw Exception('NIS is invalid.');
+        if (!mounted) return;
+
+        Navigator.pushAndRemoveUntil(
+          context,
+          MaterialPageRoute(builder: (context) => const HomeScreen()),
+          (Route<dynamic> route) => false, // Remove all previous routes
+        );
+      } else {
+        if (!mounted) return;
+        customSnackbar(
+          message: 'No user found with this email.',
+          context: context,
+          backgroundColor: const Color(0xFFD22B2B),
+        );
+      }
+    } on FirebaseAuthException catch (e) {
       if (!mounted) return;
       customSnackbar(
-          message: 'NIS is invalid.',
-          context: context,
-          backgroundColor: Colors.redAccent);
-      if (mounted) {
-        setState(() {
-          _isLoading = false;
-        });
-      }
-      return;
-    }
-
-    try {
-      UserCredential justCreatedUser = await _auth
-          .createUserWithEmailAndPassword(email: email, password: password);
-      User? user = justCreatedUser.user;
-
-      if (user != null) {
-        await _db.collection("users").doc(user.uid).set({
-          'uid': user.uid,
-          'email': email,
-          'nis': _nisController.text.trim(),
-          'displayName': displayName,
-          'createdAt': FieldValue.serverTimestamp(),
-        });
-
-        await user.sendEmailVerification();
-      }
-
-      // Check if widget is still mounted before navigating
-      if (!mounted) return;
-
-      Navigator.pushReplacement(
-        context,
-        MaterialPageRoute(builder: (context) => const HomeScreen()),
+        message: 'Failed to sign in: ${e.message}',
+        context: context,
+        backgroundColor: const Color(0xFFD22B2B),
       );
-    } on FirebaseAuthException catch (e) {
-      _showSnackBar("Failed to create account: ${e.message}");
     } finally {
       if (mounted) {
         setState(() {
@@ -391,10 +403,5 @@ class _AccountCreationScreenState extends State<AccountCreationScreen> {
         });
       }
     }
-  }
-
-  void _showSnackBar(String message) {
-    final snackBar = SnackBar(content: Text(message));
-    ScaffoldMessenger.of(context).showSnackBar(snackBar);
   }
 }

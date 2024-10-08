@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
 import 'package:portals/main.dart';
 import 'package:portals/pages/home_screen.dart';
-import 'package:portals/pages/login_screen.dart';
+import 'package:portals/pages/auth/login_screen.dart';
 import '../components/custom_button.dart';
 
 class SlidesPage extends StatefulWidget {

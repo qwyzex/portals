@@ -3,7 +3,7 @@ import 'package:flutter/material.dart';
 import 'package:portals/components/custom_snackbar.dart';
 import 'package:portals/main.dart';
 import 'package:portals/pages/home_screen.dart';
-import 'package:portals/pages/login_screen.dart';
+import 'package:portals/pages/auth/login_screen.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 
 class PasswordResetPage extends StatefulWidget {

@@ -2,7 +2,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
 import 'package:flutter/services.dart';
-import 'package:portals/pages/login_screen.dart';
+import 'package:portals/pages/auth/login_screen.dart';
 
 class AccountCreationScreen extends StatefulWidget {
   const AccountCreationScreen({super.key});
