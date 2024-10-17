@@ -2,6 +2,7 @@ import 'package:cloud_firestore/cloud_firestore.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/cupertino.dart';
 import 'package:flutter/material.dart';
+import 'package:flutter/services.dart';
 import 'package:portals/main.dart';
 import 'package:portals/pages/profile/settings.dart';
 import 'package:simple_gradient_text/simple_gradient_text.dart';
@@ -43,6 +44,7 @@ class EditProfile extends StatefulWidget {
   final String displayName;
   final String photoURL;
   final Map<String, bool> showPublic;
+  final Future<void> Function() postUpdateFunction;
 
   const EditProfile({
     super.key,
@@ -51,6 +53,7 @@ class EditProfile extends StatefulWidget {
     required this.nis,
     required this.schoolClass,
     required this.showPublic,
+    required this.postUpdateFunction,
   });
 
   @override
@@ -62,6 +65,9 @@ class _EditProfileState extends State<EditProfile> {
   final FirebaseFirestore _firestore = FirebaseFirestore.instance;
 
   TextEditingController _displayNameController = TextEditingController();
+  String? dropdownValue = classList.first;
+  bool showPublicNIS = false;
+  bool showPublicClass = false;
 
   Map<String, dynamic>? userData; // To store the user document data
 
@@ -81,18 +87,49 @@ class _EditProfileState extends State<EditProfile> {
     }
   }
 
+  Future<void> updateUserData() async {
+    final User? user = _auth.currentUser;
+
+    if (user != null) {
+      try {
+        await _firestore.collection('users').doc(user.uid).update({
+          'displayName': _displayNameController.text,
+          'class': dropdownValue,
+          'showPublicClass': showPublicClass,
+          'showPublicNIS': showPublicNIS,
+        }).then(
+          (value) => {
+            if (mounted)
+              {
+                ScaffoldMessenger.of(context).showSnackBar(
+                  const SnackBar(content: Text('Profile Updated!')),
+                ),
+                widget.postUpdateFunction(),
+                Navigator.pop(context)
+              }
+          },
+        );
+      } catch (e) {
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            SnackBar(content: Text(e.toString())),
+          );
+        }
+      }
+    }
+  }
+
   @override
   void initState() {
     super.initState();
     _displayNameController = TextEditingController(text: widget.displayName);
+
+    // SETTING VALUES
+    dropdownValue = widget.schoolClass;
     showPublicClass = widget.showPublic['showPublicClass']!;
     showPublicNIS = widget.showPublic['showPublicNIS']!;
     fetchUserData();
   }
-
-  String dropdownValue = classList.first;
-  bool showPublicNIS = false;
-  bool showPublicClass = false;
 
   @override
   Widget build(BuildContext context) {
@@ -104,8 +141,8 @@ class _EditProfileState extends State<EditProfile> {
             actionsIconTheme: const IconThemeData(color: AppColors.textColor),
             actions: [
               CupertinoButton(
+                onPressed: updateUserData,
                 child: const Text('SAVE'),
-                onPressed: () {},
               )
             ],
             leadingWidth: 100,
@@ -117,116 +154,128 @@ class _EditProfileState extends State<EditProfile> {
         body: Column(mainAxisAlignment: MainAxisAlignment.center, children: [
           Expanded(
               child: SingleChildScrollView(
-                  padding: const EdgeInsets.only(left: 36, right: 36, top: 12),
+                  // padding: const EdgeInsets.only(left: 36, right: 36, top: 12),
                   child: Column(
-                    crossAxisAlignment: CrossAxisAlignment.start,
-                    children: [
-                      Row(
-                        children: [
-                          Container(
-                            decoration: BoxDecoration(
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.grey.withOpacity(0.15),
-                                    spreadRadius: 5,
-                                    blurRadius: 7,
-                                    // offset: const Offset(0, 3),
-                                  )
-                                ]),
-                            child: CircleAvatar(
-                              radius: 60,
-                              backgroundImage: NetworkImage(widget.photoURL),
-                            ),
-                          ),
-                          const SizedBox(
-                            width: 30,
-                          ),
-                          Column(
-                            mainAxisAlignment: MainAxisAlignment.center,
-                            crossAxisAlignment: CrossAxisAlignment.start,
-                            children: [
-                              Text("#${widget.nis}"),
-                              const SizedBox(
-                                height: 10,
-                              ),
-                              CupertinoButton(
-                                  padding: const EdgeInsets.all(0),
-                                  onPressed: () {},
-                                  child: const Text("Edit Profile Picture")),
-                              CupertinoButton(
-                                  padding: const EdgeInsets.all(0),
-                                  onPressed: () {},
-                                  child: const Text("Remove Profile Picture")),
-                            ],
-                          )
-                        ],
+            crossAxisAlignment: CrossAxisAlignment.start,
+            children: [
+              Padding(
+                padding: const EdgeInsets.all(16.0),
+                child: Row(
+                  children: [
+                    Container(
+                      decoration:
+                          BoxDecoration(shape: BoxShape.circle, boxShadow: [
+                        BoxShadow(
+                          color: Colors.grey.withOpacity(0.15),
+                          spreadRadius: 5,
+                          blurRadius: 7,
+                        )
+                      ]),
+                      child: CircleAvatar(
+                        radius: 60,
+                        backgroundImage: NetworkImage(widget.photoURL),
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      const Text('Name:'),
-                      const SizedBox(
-                        height: 6,
-                      ),
-                      TextField(
-                        controller: _displayNameController,
-                        // set default value as document['name']
-                        decoration: const InputDecoration(
-                          hintText: 'Enter your name',
+                    ),
+                    const SizedBox(
+                      width: 30,
+                    ),
+                    Column(
+                      mainAxisAlignment: MainAxisAlignment.center,
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        Text("#${widget.nis}"),
+                        const SizedBox(
+                          height: 10,
                         ),
+                        CupertinoButton(
+                            padding: const EdgeInsets.all(0),
+                            onPressed: () {},
+                            child: const Text("Edit Profile Picture")),
+                        CupertinoButton(
+                            padding: const EdgeInsets.all(0),
+                            onPressed: () {},
+                            child: const Text("Remove Profile Picture")),
+                      ],
+                    )
+                  ],
+                ),
+              ),
+              const SizedBox(
+                height: 20,
+              ),
+              Padding(
+                padding: const EdgeInsets.all(12.0),
+                child: Column(
+                  mainAxisAlignment: MainAxisAlignment.start,
+                  crossAxisAlignment: CrossAxisAlignment.start,
+                  children: [
+                    const Text('Name:'),
+                    const SizedBox(
+                      height: 6,
+                    ),
+                    TextField(
+                      maxLength: 60,
+                      maxLengthEnforcement: MaxLengthEnforcement.enforced,
+                      maxLines: 1,
+                      controller: _displayNameController,
+                      decoration: const InputDecoration(
+                        hintText: 'Enter your name',
                       ),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      const Text('Class'),
-                      DropdownMenu(
-                          initialSelection: classList
-                              .where((element) => widget.schoolClass == element)
-                              .first,
-                          onSelected: (String? value) {
-                            setState(() {
-                              dropdownValue = value!;
-                            });
-                          },
-                          dropdownMenuEntries: classList
-                              .map<DropdownMenuEntry<String>>((String value) {
-                            return DropdownMenuEntry<String>(
-                                value: value, label: value);
-                          }).toList()),
-                      const SizedBox(
-                        height: 20,
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Show NIS to public'),
-                          Switch(
-                              activeColor: AppColors.textColor,
-                              value: showPublicNIS,
-                              onChanged: (bool value) {
-                                setState(() {
-                                  showPublicNIS = value;
-                                });
-                              }),
-                        ],
-                      ),
-                      Row(
-                        mainAxisAlignment: MainAxisAlignment.spaceBetween,
-                        children: [
-                          const Text('Show Class to public'),
-                          Switch(
-                              activeColor: AppColors.textColor,
-                              value: showPublicClass,
-                              onChanged: (bool value) {
-                                setState(() {
-                                  showPublicClass = value;
-                                });
-                              }),
-                        ],
-                      )
-                    ],
-                  )))
+                    ),
+                  ],
+                ),
+              ),
+              ListTile(
+                title: const Text('Class'),
+                trailing: DropdownMenu(
+                    initialSelection: classList
+                        .where((element) => widget.schoolClass == element)
+                        .first,
+                    onSelected: (value) {
+                      setState(() {
+                        dropdownValue = value.toString();
+                      });
+                    },
+                    dropdownMenuEntries: classList
+                        .map<DropdownMenuEntry<String>>((String value) {
+                      return DropdownMenuEntry<String>(
+                          value: value, label: value);
+                    }).toList()),
+              ),
+              ListTile(
+                title: const Text('Show NIS to public'),
+                onTap: () {
+                  setState(() {
+                    showPublicNIS = !showPublicNIS;
+                  });
+                },
+                trailing: Switch(
+                    activeColor: AppColors.textColor,
+                    value: showPublicNIS,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showPublicNIS = value;
+                      });
+                    }),
+              ),
+              ListTile(
+                title: const Text('Show class to public'),
+                onTap: () {
+                  setState(() {
+                    showPublicClass = !showPublicClass;
+                  });
+                },
+                trailing: Switch(
+                    activeColor: AppColors.textColor,
+                    value: showPublicClass,
+                    onChanged: (bool value) {
+                      setState(() {
+                        showPublicClass = value;
+                      });
+                    }),
+              ),
+            ],
+          )))
         ]));
   }
 }

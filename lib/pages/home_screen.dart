@@ -85,6 +85,7 @@ class _HomeScreenState extends State<HomeScreen> {
       body: openedTab == 2
           ? AccountProfile(
               userData: userData,
+              refetchUserData: fetchUserData,
             )
           : HomeFeed(postsData: postsData, refetchPosts: fetchPosts),
       bottomNavigationBar: BottomAppBar(

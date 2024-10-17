@@ -7,8 +7,10 @@ import 'package:simple_gradient_text/simple_gradient_text.dart';
 
 class AccountProfile extends StatefulWidget {
   final Map<String, dynamic>? userData;
+  final Future<void> Function() refetchUserData;
 
-  const AccountProfile({super.key, required this.userData});
+  const AccountProfile(
+      {super.key, required this.userData, required this.refetchUserData});
 
   @override
   State<AccountProfile> createState() => _AccountProfileState();
@@ -90,20 +92,22 @@ class _AccountProfileState extends State<AccountProfile>
                 CupertinoButton(
                   onPressed: () {
                     Navigator.push(
-                        context,
-                        CupertinoPageRoute(
-                            builder: (context) => EditProfile(
-                                    photoURL: widget.userData?['photoURL'],
-                                    displayName:
-                                        widget.userData?['displayName'],
-                                    nis: widget.userData?['nis'],
-                                    schoolClass: widget.userData?['class'],
-                                    showPublic: {
-                                      'showPublicNIS':
-                                          widget.userData?['showPublicNIS'],
-                                      'showPublicClass':
-                                          widget.userData?['showPublicClass'],
-                                    })));
+                      context,
+                      CupertinoPageRoute(
+                        builder: (context) => EditProfile(
+                            photoURL: widget.userData?['photoURL'],
+                            displayName: widget.userData?['displayName'],
+                            nis: widget.userData?['nis'],
+                            schoolClass: widget.userData?['class'],
+                            showPublic: {
+                              'showPublicNIS':
+                                  widget.userData?['showPublicNIS'],
+                              'showPublicClass':
+                                  widget.userData?['showPublicClass'],
+                            },
+                            postUpdateFunction: widget.refetchUserData),
+                      ),
+                    );
                   },
                   child: const Text("Edit Profile"),
                 ),
